@@ -43,3 +43,32 @@
 - Database query time: < 100ms
 - Memory usage: < 256MB
 
+# Performance Optimization Guidelines
+
+## Database Optimization
+- Indexes on frequently queried fields
+- Connection pooling with MongoDB
+- Query optimization with aggregation pipelines
+- Batch processing for large data syncs
+
+## Frontend Optimization
+- Code splitting at route level
+- Lazy loading of components
+- Memoization of expensive computations
+- Image optimization and caching
+- CSS-in-JS optimization
+
+## API Optimization
+- Response caching with Redis
+- Pagination for large datasets
+- Compression of responses
+- Rate limiting to prevent abuse
+- Connection timeout management
+
+## Monitoring & Observability
+- Error tracking and logging
+- Performance metrics collection
+- User activity analytics
+- System resource monitoring
+- Alert configuration for issues
+
