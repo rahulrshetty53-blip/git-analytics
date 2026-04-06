@@ -14,7 +14,7 @@ class AnalyticsService {
       // Get commits count
       const totalCommits = await Commit.countDocuments({
         repositoryId: { $in: repoIds },
-        createdAt: { $gte: thirtyDaysAgo }
+        committedDate: { $gte: thirtyDaysAgo }
       })
 
       // Get PR count
@@ -56,13 +56,13 @@ class AnalyticsService {
         {
           $match: {
             repositoryId: { $in: repoIds },
-            createdAt: { $gte: startDate }
+            committedDate: { $gte: startDate }
           }
         },
         {
           $group: {
             _id: {
-              $dateToString: { format: '%Y-%m-%d', date: '$createdAt' }
+              $dateToString: { format: '%Y-%m-%d', date: '$committedDate' }
             },
             count: { $sum: 1 }
           }
@@ -112,13 +112,13 @@ class AnalyticsService {
         {
           $match: {
             repositoryId,
-            createdAt: { $gte: thirtyDaysAgo }
+            committedDate: { $gte: thirtyDaysAgo }
           }
         },
         {
           $group: {
             _id: {
-              $dateToString: { format: '%Y-%m-%d', date: '$createdAt' }
+              $dateToString: { format: '%Y-%m-%d', date: '$committedDate' }
             },
             count: { $sum: 1 }
           }
@@ -194,7 +194,7 @@ class AnalyticsService {
       const commits = await Commit.find({
         repositoryId: { $in: repoIds }
       })
-        .sort({ createdAt: -1 })
+        .sort({ committedDate: -1 })
         .limit(limit)
         .lean()
 
@@ -202,7 +202,7 @@ class AnalyticsService {
         title: c.message,
         repository: c.repositoryId?.toString(),
         author: c.author?.name || 'Unknown',
-        time: new Date(c.createdAt).toLocaleDateString()
+        time: new Date(c.committedDate).toLocaleDateString()
       }))
     } catch (error) {
       console.error('Error fetching recent activity:', error)

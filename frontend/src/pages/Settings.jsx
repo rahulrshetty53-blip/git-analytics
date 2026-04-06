@@ -1,14 +1,33 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Layout from '../components/Layout'
 import Card from '../components/Card'
 import api from '../services/api'
-import { Key, Github } from 'lucide-react'
+import { Key, Github, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react'
 
 function Settings() {
   const [gitHubToken, setGitHubToken] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [repositories, setRepositories] = useState([])
+  const [loadingRepos, setLoadingRepos] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+
+  useEffect(() => {
+    fetchRepositories()
+  }, [])
+
+  const fetchRepositories = async () => {
+    try {
+      setLoadingRepos(true)
+      const response = await api.get('/repositories')
+      setRepositories(response.data || [])
+    } catch (err) {
+      console.error('Error fetching repositories:', err)
+    } finally {
+      setLoadingRepos(false)
+    }
+  }
 
   const handleAddGitHubToken = async (e) => {
     e.preventDefault()
@@ -20,13 +39,34 @@ function Settings() {
       const response = await api.post('/auth/github-token', {
         token: gitHubToken
       })
-      setSuccess('GitHub token added successfully! Your repositories will be synced automatically.')
+      setSuccess('✅ GitHub token added successfully! Syncing repositories...')
       setGitHubToken('')
+
+      // Fetch repositories after adding token
+      setTimeout(() => {
+        fetchRepositories()
+      }, 1000)
+
       setTimeout(() => setSuccess(''), 5000)
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to add GitHub token')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleSyncRepositories = async () => {
+    try {
+      setSyncing(true)
+      setError('')
+      await api.post('/repositories/sync')
+      setSuccess('✅ Repositories synced successfully!')
+      await fetchRepositories()
+      setTimeout(() => setSuccess(''), 5000)
+    } catch (err) {
+      setError('Failed to sync repositories. Make sure you have added a valid GitHub token.')
+    } finally {
+      setSyncing(false)
     }
   }
 
@@ -53,13 +93,13 @@ function Settings() {
 
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
-                  {error}
+                  ❌ {error}
                 </div>
               )}
 
               {success && (
                 <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4">
-                  ✅ {success}
+                  {success}
                 </div>
               )}
 
@@ -76,7 +116,7 @@ function Settings() {
                     placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                   />
                   <p className="text-xs text-gray-500 mt-2">
-                    💡 Create token at: {' '}
+                    💡 Create token at:{' '}
                     <a
                       href="https://github.com/settings/tokens"
                       target="_blank"
@@ -113,22 +153,85 @@ function Settings() {
           </div>
         </Card>
 
+        {/* Synced Repositories */}
+        <Card className="max-w-4xl mt-6">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">Synced Repositories</h3>
+              <p className="text-sm text-gray-600">
+                {repositories.length} repository{repositories.length !== 1 ? 'ies' : ''} synced
+              </p>
+            </div>
+            <button
+              onClick={handleSyncRepositories}
+              disabled={syncing}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg font-semibold transition-colors"
+            >
+              <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+              {syncing ? 'Syncing...' : 'Re-sync'}
+            </button>
+          </div>
+
+          {loadingRepos ? (
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : repositories.length > 0 ? (
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {repositories.map((repo) => (
+                <div key={repo._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <Github className="w-5 h-5 text-gray-600" />
+                      <h4 className="font-semibold text-gray-900">{repo.name}</h4>
+                    </div>
+                    <div className="flex gap-4 mt-2 text-xs text-gray-600">
+                      <span>⭐ {repo.starsCount} stars</span>
+                      <span>🍴 {repo.forksCount} forks</span>
+                      <span>{repo.isPrivate ? '🔒 Private' : '🌐 Public'}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {repo.isSynced ? (
+                      <div className="flex items-center gap-1 text-green-600">
+                        <CheckCircle className="w-5 h-5" />
+                        <span className="text-xs font-semibold">Synced</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1 text-orange-600">
+                        <AlertCircle className="w-5 h-5" />
+                        <span className="text-xs font-semibold">Pending</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-gray-500">
+              <Github className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p className="text-lg font-medium">No repositories yet</p>
+              <p className="text-sm">Add a GitHub token above to sync your repositories</p>
+            </div>
+          )}
+        </Card>
+
         {/* Info Card */}
         <Card className="max-w-2xl mt-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">What Happens Next?</h3>
+          <h3 className="text-lg font-bold text-gray-900 mb-4">📊 What Happens Next?</h3>
           <div className="space-y-3">
             <div className="flex gap-3">
               <div className="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-md bg-blue-600 text-white text-sm font-semibold">1</div>
               <div>
                 <p className="font-medium text-gray-900">Repositories Sync</p>
-                <p className="text-sm text-gray-600">Your GitHub repositories will automatically appear</p>
+                <p className="text-sm text-gray-600">Your GitHub repositories will automatically appear above</p>
               </div>
             </div>
             <div className="flex gap-3">
               <div className="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-md bg-blue-600 text-white text-sm font-semibold">2</div>
               <div>
                 <p className="font-medium text-gray-900">Data Collection</p>
-                <p className="text-sm text-gray-600">Dashboard will show commits, PRs, issues, and metrics</p>
+                <p className="text-sm text-gray-600">Dashboard will show commits, PRs, issues, and metrics from synced repos</p>
               </div>
             </div>
             <div className="flex gap-3">
