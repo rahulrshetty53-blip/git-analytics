@@ -1,3 +1,4 @@
+import mongoose from 'mongoose'
 import Commit from '../models/Commit.js'
 import PullRequest from '../models/PullRequest.js'
 import Repository from '../models/Repository.js'
@@ -104,6 +105,9 @@ class AnalyticsService {
 
   async getRepositoryAnalytics(repositoryId) {
     try {
+      // Convert string ID to ObjectId
+      const repoIdObj = new mongoose.Types.ObjectId(repositoryId)
+
       // Commit trends
       const thirtyDaysAgo = new Date()
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
@@ -111,7 +115,7 @@ class AnalyticsService {
       const commitTrends = await Commit.aggregate([
         {
           $match: {
-            repositoryId,
+            repositoryId: repoIdObj,
             committedDate: { $gte: thirtyDaysAgo }
           }
         },
@@ -129,7 +133,7 @@ class AnalyticsService {
       // Top contributors
       const topContributors = await Commit.aggregate([
         {
-          $match: { repositoryId }
+          $match: { repositoryId: repoIdObj }
         },
         {
           $group: {
@@ -151,7 +155,7 @@ class AnalyticsService {
       // PR Stats
       const prStats = await PullRequest.aggregate([
         {
-          $match: { repositoryId }
+          $match: { repositoryId: repoIdObj }
         },
         {
           $group: {
