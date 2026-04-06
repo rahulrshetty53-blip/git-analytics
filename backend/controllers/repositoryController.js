@@ -74,111 +74,147 @@ export const syncRepositoryData = async (req, res, next) => {
 
     const [owner, repo] = repository.fullName.split('/')
 
+    console.log(`📥 Syncing ${repository.fullName}...`)
+
     // Sync commits
-    const commits = await githubService.getCommits(owner, repo)
-    for (const commit of commits) {
-      await Commit.updateOne(
-        {
-          gitHubSha: commit.sha,
-          repositoryId: repository._id
-        },
-        {
-          gitHubSha: commit.sha,
-          message: commit.commit.message,
-          author: {
-            name: commit.commit.author.name,
-            email: commit.commit.author.email
+    let commitCount = 0
+    try {
+      const commits = await githubService.getCommits(owner, repo)
+      console.log(`  📝 Found ${commits.length} commits`)
+      for (const commit of commits) {
+        await Commit.updateOne(
+          {
+            gitHubSha: commit.sha,
+            repositoryId: repository._id
           },
-          url: commit.html_url,
-          additions: commit.stats?.additions || 0,
-          deletions: commit.stats?.deletions || 0,
-          filesChanged: commit.files?.length || 0,
-          committedDate: new Date(commit.commit.author.date),
-          repositoryId: repository._id,
-          userId
-        },
-        { upsert: true }
-      )
+          {
+            gitHubSha: commit.sha,
+            message: commit.commit.message,
+            author: {
+              name: commit.commit.author.name,
+              email: commit.commit.author.email
+            },
+            url: commit.html_url,
+            additions: commit.stats?.additions || 0,
+            deletions: commit.stats?.deletions || 0,
+            filesChanged: commit.files?.length || 0,
+            committedDate: new Date(commit.commit.author.date),
+            repositoryId: repository._id,
+            userId
+          },
+          { upsert: true }
+        )
+        commitCount++
+      }
+      console.log(`  ✅ Saved ${commitCount} commits`)
+    } catch (err) {
+      console.error(`  ❌ Error syncing commits:`, err.message)
     }
 
     // Sync pull requests
-    const prs = await githubService.getPullRequests(owner, repo, 'all')
-    for (const pr of prs) {
-      await PullRequest.updateOne(
-        {
-          gitHubId: pr.id.toString(),
-          repositoryId: repository._id
-        },
-        {
-          gitHubId: pr.id.toString(),
-          number: pr.number,
-          title: pr.title,
-          body: pr.body,
-          author: {
-            name: pr.user?.login || 'Unknown',
-            login: pr.user?.login || 'Unknown',
-            avatarUrl: pr.user?.avatar_url
+    let prCount = 0
+    try {
+      const prs = await githubService.getPullRequests(owner, repo, 'all')
+      console.log(`  📋 Found ${prs.length} pull requests`)
+      for (const pr of prs) {
+        await PullRequest.updateOne(
+          {
+            gitHubId: pr.id.toString(),
+            repositoryId: repository._id
           },
-          state: pr.merged_at ? 'merged' : pr.state,
-          url: pr.url,
-          htmlUrl: pr.html_url,
-          createdAt: new Date(pr.created_at),
-          updatedAt: new Date(pr.updated_at),
-          closedAt: pr.closed_at ? new Date(pr.closed_at) : null,
-          mergedAt: pr.merged_at ? new Date(pr.merged_at) : null,
-          additions: pr.additions || 0,
-          deletions: pr.deletions || 0,
-          changedFiles: pr.changed_files || 0,
-          commits: pr.commits || 0,
-          repositoryId: repository._id,
-          userId
-        },
-        { upsert: true }
-      )
+          {
+            gitHubId: pr.id.toString(),
+            number: pr.number,
+            title: pr.title,
+            body: pr.body,
+            author: {
+              name: pr.user?.login || 'Unknown',
+              login: pr.user?.login || 'Unknown',
+              avatarUrl: pr.user?.avatar_url
+            },
+            state: pr.merged_at ? 'merged' : pr.state,
+            url: pr.url,
+            htmlUrl: pr.html_url,
+            createdAt: new Date(pr.created_at),
+            updatedAt: new Date(pr.updated_at),
+            closedAt: pr.closed_at ? new Date(pr.closed_at) : null,
+            mergedAt: pr.merged_at ? new Date(pr.merged_at) : null,
+            additions: pr.additions || 0,
+            deletions: pr.deletions || 0,
+            changedFiles: pr.changed_files || 0,
+            commits: pr.commits || 0,
+            repositoryId: repository._id,
+            userId
+          },
+          { upsert: true }
+        )
+        prCount++
+      }
+      console.log(`  ✅ Saved ${prCount} PRs`)
+    } catch (err) {
+      console.error(`  ❌ Error syncing PRs:`, err.message)
     }
 
     // Sync issues
-    const issues = await githubService.getIssues(owner, repo, 'all')
-    for (const issue of issues) {
-      // Skip pull requests (they have pull_request property)
-      if (issue.pull_request) continue
+    let issueCount = 0
+    try {
+      const issues = await githubService.getIssues(owner, repo, 'all')
+      console.log(`  🐛 Found ${issues.length} issues`)
+      for (const issue of issues) {
+        // Skip pull requests (they have pull_request property)
+        if (issue.pull_request) continue
 
-      await Issue.updateOne(
-        {
-          gitHubId: issue.id.toString(),
-          repositoryId: repository._id
-        },
-        {
-          gitHubId: issue.id.toString(),
-          number: issue.number,
-          title: issue.title,
-          body: issue.body,
-          author: {
-            name: issue.user?.login || 'Unknown',
-            login: issue.user?.login || 'Unknown',
-            avatarUrl: issue.user?.avatar_url
+        await Issue.updateOne(
+          {
+            gitHubId: issue.id.toString(),
+            repositoryId: repository._id
           },
-          state: issue.state,
-          labels: issue.labels?.map(l => l.name) || [],
-          assignees: issue.assignees?.map(a => a.login) || [],
-          url: issue.url,
-          htmlUrl: issue.html_url,
-          createdAt: new Date(issue.created_at),
-          updatedAt: new Date(issue.updated_at),
-          closedAt: issue.closed_at ? new Date(issue.closed_at) : null,
-          comments: issue.comments || 0,
-          repositoryId: repository._id,
-          userId
-        },
-        { upsert: true }
-      )
+          {
+            gitHubId: issue.id.toString(),
+            number: issue.number,
+            title: issue.title,
+            body: issue.body,
+            author: {
+              name: issue.user?.login || 'Unknown',
+              login: issue.user?.login || 'Unknown',
+              avatarUrl: issue.user?.avatar_url
+            },
+            state: issue.state,
+            labels: issue.labels?.map(l => l.name) || [],
+            assignees: issue.assignees?.map(a => a.login) || [],
+            url: issue.url,
+            htmlUrl: issue.html_url,
+            createdAt: new Date(issue.created_at),
+            updatedAt: new Date(issue.updated_at),
+            closedAt: issue.closed_at ? new Date(issue.closed_at) : null,
+            comments: issue.comments || 0,
+            repositoryId: repository._id,
+            userId
+          },
+          { upsert: true }
+        )
+        issueCount++
+      }
+      console.log(`  ✅ Saved ${issueCount} issues`)
+    } catch (err) {
+      console.error(`  ❌ Error syncing issues:`, err.message)
     }
 
     repository.isSynced = true
     repository.lastSyncedAt = new Date()
     await repository.save()
 
+    console.log(`✅ Sync complete for ${repository.fullName}`)
+
     res.status(200).json({
+      success: true,
+      message: `Synced ${repository.name}: ${commitCount} commits, ${prCount} PRs, ${issueCount} issues`
+    })
+  } catch (error) {
+    console.error('Sync error:', error)
+    next(error)
+  }
+}
       success: true,
       message: 'Repository data synced successfully',
       commits: commits.length,
