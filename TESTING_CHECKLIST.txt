@@ -1,0 +1,140 @@
+╔════════════════════════════════════════════════════════════════════╗
+║                    SYNC TESTING CHECKLIST                           ║
+╚════════════════════════════════════════════════════════════════════╝
+
+🔍 FOLLOW THESE STEPS TO TEST THE COMPLETE SYNC:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 1: Verify GitHub Token is Saved
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] Go to http://localhost:5173/settings
+[ ] You should see a GitHub token field showing: ghp_xxxxx...
+[ ] If empty or missing:
+    - Go to https://github.com/settings/tokens
+    - Create NEW token with repo + user scopes
+    - Paste in Settings page
+    - Click Save
+    - Verify it saved by refreshing page
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 2: Open Developer Console
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] Press F12 in browser (or Ctrl+Shift+J)
+[ ] You should see Developer Tools open at bottom
+[ ] Click "Console" tab
+[ ] Look for any RED error messages (take note of them)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 3: Go to Dashboard and Sync
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] Click "Dashboard" in left sidebar
+[ ] You should see "Sync Repositories" button at top right
+[ ] Click it and watch the console
+
+EXPECTED CONSOLE OUTPUT:
+┌─────────────────────────────────────────────────────────────┐
+│ 🔄 Step 1: Syncing repositories...                         │
+│ ✅ Repositories synced: { message: "Synced X repositories" }│
+│ 🔄 Step 2: Fetching repository list...                     │
+│ ✅ Repositories list: [...]                                │
+│ 🔄 Step 3: Syncing data for X repositories...              │
+│   ⏳ Syncing repo-name... (1/X)                             │
+│   ✅ Synced repo-name                                      │
+│   ... (repeat for each repo)                               │
+│ ✅ All repositories synced!                                │
+│ 🔄 Step 4: Refreshing dashboard data...                   │
+│ ✨ Sync complete! Your data is now updated.               │
+└─────────────────────────────────────────────────────────────┘
+
+[ ] Wait for completion (30-90 seconds depending on repo size)
+[ ] Look for any RED ERROR messages
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 4: Check Dashboard Statistics
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+After sync completes, you should see:
+
+[ ] Total Commits: Number > 0
+[ ] Pull Requests: Number > 0
+[ ] Issues Resolved: Number > 0
+[ ] Velocity: Number > 0
+
+If all show 0:
+→ This means the sync completed but no data found
+→ Check if your GitHub token has proper permissions
+→ Check GitHub API didn't rate limit you
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 5: Check MongoDB for Data
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] Open MongoDB Compass
+[ ] Connect to: mongodb://localhost:27017
+[ ] See database: "git-analytics"
+[ ] Check collections:
+    - repositories: Should have > 0 documents
+    - commits: Should have > 0 documents
+    - pullrequests: Should have > 0 documents
+    - issues: Should have > 0 documents
+
+[ ] If collections are empty:
+    - GitHub token might be invalid
+    - GitHub API might have issues
+    - User might not have access to repos
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🐛 TROUBLESHOOTING ERRORS:
+
+ERROR: "GitHub token not found"
+→ Go to Settings and add token again
+→ Make sure you click Save
+
+ERROR: "Bad credentials"
+→ Your token is invalid or expired
+→ Go to https://github.com/settings/tokens
+→ Delete old token
+→ Create new token
+→ Add to Settings page
+
+ERROR: "API rate limit exceeded"
+→ You've made too many GitHub API calls
+→ Wait 1 hour and try again
+
+ERROR: "No repositories found"
+→ Your GitHub account has no repositories
+→ Create a test repository on GitHub first
+→ Then try syncing again
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📸 SCREENSHOT THIS AND SEND TO ME:
+
+If sync fails or doesn't show data, please send:
+1. Screenshot of browser console (F12 → Console) showing errors
+2. Screenshot of Dashboard stats (showing all 0s or actual data)
+3. Screenshot of MongoDB Compass showing collections
+4. Any error messages you see
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ EXPECTED FINAL RESULT:
+
+Your Dashboard should show:
+- Total Commits: 50+ (or whatever you have)
+- Pull Requests: 5+ (or whatever you have)
+- Issues Resolved: 3+ (or whatever you have)
+- Velocity: 12+ commits/week
+- Recent Activity: List of your recent commits
+- Charts: Line and bar charts showing trends
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -1,0 +1,97 @@
+╔════════════════════════════════════════════════════════════════╗
+║                 GIT ANALYTICS - QUICK REFERENCE                ║
+╚════════════════════════════════════════════════════════════════╝
+
+📌 PROJECT FOLDERS:
+- Frontend: c:\Users\DELL\Downloads\Analytics\frontend
+- Backend:  c:\Users\DELL\Downloads\Analytics\backend
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 STARTUP COMMANDS (Run in separate terminals):
+
+TERMINAL 1 - MongoDB:
+┌─────────────────────────────────────────────────────────────┐
+│ mongod                                                      │
+└─────────────────────────────────────────────────────────────┘
+
+TERMINAL 2 - Backend:
+┌─────────────────────────────────────────────────────────────┐
+│ cd c:\Users\DELL\Downloads\Analytics\backend               │
+│ npm install                                                 │
+│ npm run dev                                                 │
+└─────────────────────────────────────────────────────────────┘
+
+TERMINAL 3 - Frontend:
+┌─────────────────────────────────────────────────────────────┐
+│ cd c:\Users\DELL\Downloads\Analytics\frontend              │
+│ npm run dev                                                 │
+└─────────────────────────────────────────────────────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🌐 ACCESS POINTS:
+
+Frontend App:        http://localhost:5173
+Backend API:         http://localhost:5000
+Health Check:        http://localhost:5000/health
+MongoDB:             mongodb://localhost:27017/git-analytics
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ SYNC WORKFLOW:
+
+1. Open http://localhost:5173
+2. You're logged in as "rahul"
+3. Go to "Settings" → Add GitHub token (if not done)
+4. Go to "Dashboard"
+5. Click "Sync Repositories" button
+6. Wait 30-60 seconds
+7. Dashboard updates with your GitHub data
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔍 DEBUGGING:
+
+Check Backend Logs:
+- Look in Terminal 2 for any error messages
+- Should see "Synced X repositories" message
+
+Check Frontend Console:
+- Press F12 in browser
+- Click "Console" tab
+- Look for red error messages
+
+Test API Connection:
+- Run in Terminal 4: curl http://localhost:5000/health
+- Should see: {"status":"OK"}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️  COMMON ISSUES:
+
+"Cannot find module"
+→ Run: npm install (in the respective folder)
+
+"MongoDB connection failed"
+→ Run: mongod (in separate terminal)
+
+"Port 5000 in use"
+→ Run: netstat -ano | findstr :5000
+→ Then: taskkill /PID <PID> /F
+
+"Still no data after sync"
+→ Check browser Console (F12)
+→ Check Backend terminal logs
+→ Take screenshot and share
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 TIPS:
+
+- Keep all 3-4 terminals OPEN while using the app
+- Frontend auto-refreshes on code changes
+- Backend auto-restarts on file changes (nodemon)
+- Check .env file if connection strings are correct
+
+╚════════════════════════════════════════════════════════════════╝
