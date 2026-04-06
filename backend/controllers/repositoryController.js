@@ -215,16 +215,6 @@ export const syncRepositoryData = async (req, res, next) => {
     next(error)
   }
 }
-      success: true,
-      message: 'Repository data synced successfully',
-      commits: commits.length,
-      prs: prs.length,
-      issues: issues.filter(i => !i.pull_request).length
-    })
-  } catch (error) {
-    next(error)
-  }
-}
 
 export const getRepositoryDetails = async (req, res, next) => {
   try {
